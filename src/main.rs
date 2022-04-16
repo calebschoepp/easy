@@ -1,4 +1,4 @@
-use easy::load_module;
+use easy::Module;
 use std::{fs::File, io::Read, path::PathBuf};
 use structopt::StructOpt;
 
@@ -49,7 +49,7 @@ fn run(options: RunOptions) {
     let bytes = read_file(options.module);
 
     // TODO: Call out to library here
-    load_module(bytes);
+    let module = Module::new(bytes);
 }
 
 fn read_file(path: PathBuf) -> Vec<u8> {

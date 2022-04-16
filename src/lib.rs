@@ -1,3 +1,9 @@
-pub fn load_module(bytes: Vec<u8>) {
-    println!("Test");
+pub struct Module {
+    bytes: Vec<u8>,
+}
+
+impl Module {
+    pub fn new(bytes: Vec<u8>) -> Self {
+        Self { bytes }
+    }
 }
