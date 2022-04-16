@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use easy::load_module;
+use std::{fs::File, io::Read, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -31,8 +32,29 @@ fn main() {
     }
 }
 
-// TODO: Return result error of some kind
 fn run(options: RunOptions) {
+    let extension = options.module.extension();
+    if extension.is_none() || extension.unwrap() != "wasm" {
+        println!("Fail");
+        // TODO: Return result error of some kind
+        return;
+    }
+    if !options.module.exists() {
+        println!("Does not exist");
+        // TODO: Return result error of some kind
+        return;
+    }
+
+    // TODO: Slice or vector more efficient?
+    let bytes = read_file(options.module);
+
     // TODO: Call out to library here
-    println!("{:?}", options.module)
+    load_module(bytes);
+}
+
+fn read_file(path: PathBuf) -> Vec<u8> {
+    let mut data: Vec<u8> = Vec::new();
+    let mut f = File::open(path).expect("Unable to open file");
+    f.read_to_end(&mut data).expect("Unable to read data");
+    data
 }
