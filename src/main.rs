@@ -1,5 +1,9 @@
 use easy::Module;
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{
+    fs::File,
+    io::{Bytes, Read},
+    path::PathBuf,
+};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -45,10 +49,9 @@ fn run(options: RunOptions) {
         return;
     }
 
-    // TODO: Slice or vector more efficient?
+    // TODO: Slice or vector or bytes more efficient?
     let bytes = read_file(options.module);
 
-    // TODO: Call out to library here
     let module = Module::new(bytes);
 }
 
