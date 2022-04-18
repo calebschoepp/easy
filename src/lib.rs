@@ -1,10 +1,10 @@
-use nom::bytes::complete::tag;
+use nom::{bytes::complete::tag, combinator::map, error::VerboseError, IResult};
 
 /// A Wasm module
 #[derive(Debug)]
-pub struct Module {
+pub struct Module<'a> {
     /// Raw bytes of a module
-    bytes: Vec<u8>,
+    bytes: &'a [u8],
 
     /// Module types
     types: Vec<Type>,
@@ -14,38 +14,39 @@ pub struct Module {
 #[derive(Debug)]
 struct Type {}
 
-/// The magic header that every Wasm module begins with
-const MAGIC_HEADER: &[u8] = &[0x6d, 0x73, 0x61, 0x00];
+fn magic_header<'a, E>(input: &'a [u8]) -> IResult<&[u8], (), E>
+where
+    E: nom::error::ParseError<&'a [u8]>,
+{
+    // The magic header that every Wasm module begins with
+    let magic_header = [0x00, 0x61, 0x73, 0x6D];
+    map(tag(magic_header), |_| ())(input)
+}
 
-impl Module {
-    pub fn new(bytes: Vec<u8>) -> Self {
+impl<'a> Module<'a> {
+    pub fn new(bytes: &'a [u8]) -> Self {
         // In memory representation of module
         let m = Self {
             bytes,
             types: Vec::new(),
         };
 
-        // Track position as we decode bytes
-        let mut pos: usize = 0;
-
         // Check for magic header
-        // TODO
-        tag(MAGIC_HEADER)(m.bytes)
-        pos += 4;
+        magic_header::<VerboseError<&[u8]>>(&bytes);
 
-        // Check Wasm version
-        // TODO
-        pos += 4;
+        // // Check Wasm version
+        // // TODO
+        // pos += 4;
 
-        while (pos < m.bytes.len()) {
-            // First byte is segment ID which marks the type of segment
-            let id = 1; // TODO
+        // while pos < m.bytes.len() {
+        //     // First byte is segment ID which marks the type of segment
+        //     let id = 1; // TODO
 
-            // Next four bytes are the size of the section
-            let section_size = 1; // TODO
+        //     // Next four bytes are the size of the section
+        //     let section_size = 1; // TODO
 
-            // TODO: Consider marking start_pos before parsing section
-        }
+        //     // TODO: Consider marking start_pos before parsing section
+        // }
 
         m
     }
