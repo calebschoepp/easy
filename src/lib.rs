@@ -1,4 +1,4 @@
-use nom::{bytes::complete::tag, combinator::map, error::VerboseError, IResult};
+use nom::{bytes::complete::tag, combinator::map, IResult};
 
 /// A Wasm module
 #[derive(Debug)]
@@ -7,47 +7,51 @@ pub struct Module<'a> {
     bytes: &'a [u8],
 
     /// Module types
-    types: Vec<Type>,
+    _types: Vec<Type>,
 }
 
 /// A unique function signature
 #[derive(Debug)]
 struct Type {}
 
-fn magic_header<'a, E>(input: &'a [u8]) -> IResult<&[u8], (), E>
-where
-    E: nom::error::ParseError<&'a [u8]>,
-{
+fn magic_header<'a>(input: &'a [u8]) -> IResult<&[u8], ()> {
     // The magic header that every Wasm module begins with
     let magic_header = [0x00, 0x61, 0x73, 0x6D];
     map(tag(magic_header), |_| ())(input)
 }
 
+fn wasm_version<'a>(input: &'a [u8]) -> IResult<&[u8], ()> {
+    // Currently only supporting binary format version 1
+    let magic_header = [0x01, 0x00, 0x00, 0x00];
+    map(tag(magic_header), |_| ())(input)
+}
+
 impl<'a> Module<'a> {
-    pub fn new(bytes: &'a [u8]) -> Self {
+    // TODO: Bubble up errors with ?
+    pub fn new(bytes: &'a [u8]) -> Result<Self, ()> {
         // In memory representation of module
         let m = Self {
             bytes,
-            types: Vec::new(),
+            _types: Vec::new(),
         };
 
-        // Check for magic header
-        magic_header::<VerboseError<&[u8]>>(&bytes);
+        let parse_result = || -> IResult<&'a [u8], ()> {
+            let input = m.bytes;
 
-        // // Check Wasm version
-        // // TODO
-        // pos += 4;
+            // Check for magic header
+            let (input, _) = magic_header(input)?;
 
-        // while pos < m.bytes.len() {
-        //     // First byte is segment ID which marks the type of segment
-        //     let id = 1; // TODO
+            // Check Wasm version
+            let (_input, _) = wasm_version(input)?;
 
-        //     // Next four bytes are the size of the section
-        //     let section_size = 1; // TODO
+            Ok((&[], ()))
+        }();
 
-        //     // TODO: Consider marking start_pos before parsing section
-        // }
+        match parse_result {
+            Ok(_) => println!("Parsed well"),
+            Err(err) => println!("{:?}", err),
+        };
 
-        m
+        Ok(m)
     }
 }
