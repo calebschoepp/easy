@@ -1,11 +1,21 @@
 use nom::{bytes::complete::tag, combinator::map, IResult};
 
+/*
+Types
+Funcs
+Tables
+Mems
+Globals
+Elems
+Datas
+Start?
+Imports
+Exports
+*/
+
 /// A Wasm module
 #[derive(Debug)]
-pub struct Module<'a> {
-    /// Raw bytes of a module
-    bytes: &'a [u8],
-
+pub struct Module {
     /// Module types
     _types: Vec<Type>,
 }
@@ -13,6 +23,13 @@ pub struct Module<'a> {
 /// A unique function signature
 #[derive(Debug)]
 struct Type {}
+
+pub trait Decode
+where
+    Self: Sized,
+{
+    fn decode<'a>(input: &'a [u8]) -> IResult<&[u8], Self, nom::error::Error<&'a [u8]>>;
+}
 
 fn magic_header<'a>(input: &'a [u8]) -> IResult<&[u8], ()> {
     // The magic header that every Wasm module begins with
@@ -26,32 +43,24 @@ fn wasm_version<'a>(input: &'a [u8]) -> IResult<&[u8], ()> {
     map(tag(magic_header), |_| ())(input)
 }
 
-impl<'a> Module<'a> {
-    // TODO: Bubble up errors with ?
-    pub fn new(bytes: &'a [u8]) -> Result<Self, ()> {
-        // In memory representation of module
-        let m = Self {
-            bytes,
-            _types: Vec::new(),
-        };
+impl Decode for Module {
+    fn decode(input: &[u8]) -> IResult<&[u8], Self> {
+        // Check for the magic header at the beginning of all Wasm modules
+        let (input, _) = magic_header(input)?;
 
-        let parse_result = || -> IResult<&'a [u8], ()> {
-            let input = m.bytes;
+        // Check that it is a Wasm version we support
+        let (_input, _) = wasm_version(input)?;
 
-            // Check for magic header
-            let (input, _) = magic_header(input)?;
+        Ok((&[], Self { _types: Vec::new() }))
+    }
+}
 
-            // Check Wasm version
-            let (_input, _) = wasm_version(input)?;
-
-            Ok((&[], ()))
-        }();
-
-        match parse_result {
-            Ok(_) => println!("Parsed well"),
-            Err(err) => println!("{:?}", err),
-        };
-
-        Ok(m)
+impl Module {
+    pub fn new(bytes: &[u8]) -> Option<Self> {
+        // TODO: Return result so that errors are explicit
+        match Module::decode(bytes) {
+            Ok((_, module)) => Some(module),
+            Err(_) => None,
+        }
     }
 }

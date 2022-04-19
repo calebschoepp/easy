@@ -48,7 +48,8 @@ fn run(options: RunOptions) {
     // TODO: Slice or vector or bytes more efficient?
     let bytes = read_file(options.module);
 
-    let _module = Module::new(&bytes);
+    let module = Module::new(&bytes);
+    println!("{:?}", module);
 }
 
 fn read_file(path: PathBuf) -> Vec<u8> {
