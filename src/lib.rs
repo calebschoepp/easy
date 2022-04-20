@@ -1,16 +1,26 @@
-use nom::{bytes::complete::tag, IResult};
+use indices::TypeIdx;
+use nom::{
+    bytes::complete::{tag, take},
+    combinator::{consumed, map},
+    multi::many0,
+    IResult,
+};
 use types::FuncType;
 use util::Decode;
+use values::Name;
 
+mod indices;
 mod types;
 mod util;
 mod values;
 
 /// A Wasm module
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Module {
     /// Module types
-    _types: Vec<FuncType>,
+    types: Vec<FuncType>,
+    /// Module functions TODO: Does this need to be a more robust type?
+    functions: Vec<TypeIdx>,
 }
 
 impl Decode for Module {
@@ -19,9 +29,26 @@ impl Decode for Module {
         let (input, _) = magic_header(input)?;
 
         // Check that it is a Wasm version we support
-        let (_input, _) = wasm_version(input)?;
+        let (input, _) = wasm_version(input)?;
 
-        Ok((&[], Self { _types: Vec::new() }))
+        // Decode an arbitrary number of sections
+        let (input, sections) = many0(Section::decode)(input)?;
+
+        // Create an empty module that we can populate
+        let mut module = Self {
+            types: Vec::new(),
+            functions: Vec::new(),
+        };
+
+        // Build up a module based on the sections we've decoded
+        sections.into_iter().for_each(|section| match section {
+            Section::CustomSection(_) => (),
+            Section::TypeSection(type_section) => module.types = type_section,
+            Section::FuncSection(func_section) => module.functions = func_section,
+        });
+
+        // Return the decoded module
+        Ok((input, module))
     }
 }
 
@@ -45,6 +72,46 @@ fn wasm_version<'a>(input: &'a [u8]) -> IResult<&[u8], &[u8]> {
     // Currently only supporting binary format version 1
     let magic_header = [0x01, 0x00, 0x00, 0x00];
     tag(magic_header)(input)
+}
+
+/// A component of a module record
+#[derive(Debug, PartialEq)]
+enum Section {
+    /// Intended for use in debugging or third-party extensions
+    CustomSection((Name, Vec<u8>)),
+    /// Types found in the module
+    TypeSection(Vec<FuncType>),
+    /// Correlation between functions and their respective types
+    FuncSection(Vec<TypeIdx>),
+}
+
+impl Decode for Section {
+    fn decode(input: &[u8]) -> IResult<&[u8], Self> {
+        let (input, id) = u8::decode(input)?;
+        let (input, size) = u32::decode(input)?;
+
+        match id {
+            0 => {
+                // Custom section
+                let (input, (consumed, name)) = consumed(Name::decode)(input)?;
+                let (input, data) = take(size as usize - consumed.len())(input)?;
+                Ok((input, Section::CustomSection((name, data.to_owned()))))
+            }
+            1 => {
+                // Type section
+                map(Vec::<FuncType>::decode, |type_section| {
+                    Section::TypeSection(type_section)
+                })(input)
+            }
+            3 => {
+                // Func section
+                map(Vec::<TypeIdx>::decode, |func_section| {
+                    Section::FuncSection(func_section)
+                })(input)
+            }
+            _ => unreachable!(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -80,4 +147,27 @@ mod tests {
         assert_eq!(wasm_version(version), Ok((EMPTY, version)));
         assert!(wasm_version(not_version).is_err());
     }
+
+    // #[test]
+    // fn test_section() {
+    //     // assert_eq!(Section::decode(&[0x00]), Ok((EMPTY, Section::CustomSection(()))));
+    //     assert_eq!(
+    //         Section::decode(&[
+    //             0x01, 0x88, 0x80, 0x80, 0x80, 0x00, 0x02, 0x60, 0x01, 0x7F, 0x00, 0x60, 0x00, 0x00
+    //         ]),
+    //         Ok((
+    //             EMPTY,
+    //             Section::TypeSection(vec!(
+    //                 FuncType {
+    //                     rt1: vec!(ValType::NumType(NumType::I32)),
+    //                     rt2: vec!()
+    //                 },
+    //                 FuncType {
+    //                     rt1: vec!(),
+    //                     rt2: vec!()
+    //                 }
+    //             ))
+    //         ))
+    //     );
+    // }
 }

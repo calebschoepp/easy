@@ -58,7 +58,7 @@ where
 }
 
 /// A UTF-8 character sequence
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Name(Vec<u8>);
 
 impl Decode for Name {

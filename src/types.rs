@@ -74,8 +74,8 @@ type ResultType = Vec<ValType>;
 /// A unique function signature
 #[derive(Debug, PartialEq)]
 pub struct FuncType {
-    rt1: ResultType,
-    rt2: ResultType,
+    pub rt1: ResultType,
+    pub rt2: ResultType,
 }
 
 impl Decode for FuncType {
