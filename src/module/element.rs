@@ -1,8 +1,9 @@
 use nom::IResult;
 
-use crate::{
+use crate::instructions::Expression;
+
+use super::{
     indices::{FuncIdx, TableIdx},
-    instructions::Expression,
     types::RefType,
     util::Decode,
 };

@@ -1,6 +1,7 @@
-use crate::util::Decode;
 use nom::{combinator::opt, multi::count, IResult};
 use nom_leb128::{leb128_i32, leb128_i64, leb128_u32};
+
+use super::util::Decode;
 
 impl Decode for u32 {
     fn decode(input: &[u8]) -> IResult<&[u8], Self> {

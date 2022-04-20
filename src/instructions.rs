@@ -1,6 +1,5 @@
+use crate::module::util::Decode;
 use nom::IResult;
-
-use crate::util::Decode;
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]

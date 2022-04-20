@@ -4,13 +4,19 @@ use nom::{
     IResult,
 };
 
-use crate::{
+use super::{
+    code::Code,
+    data::Data,
+    element::Element,
+    export::Export,
+    global::Global,
+    import::Import,
     indices::{FuncIdx, TypeIdx},
+    memory::Memory,
     table::Table,
     types::FuncType,
     util::Decode,
     values::Name,
-    Code, Data, Element, Export, Global, Import, Memory,
 };
 
 /// A component of a module record
@@ -123,4 +129,34 @@ impl Decode for Section {
             _ => unreachable!(), // TODO: This should probably actually throw a parse error rather than panic
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+
+    // TODO: Write tests
+
+    // #[test]
+    // fn test_section() {
+    //     // assert_eq!(Section::decode(&[0x00]), Ok((EMPTY, Section::CustomSection(()))));
+    //     assert_eq!(
+    //         Section::decode(&[
+    //             0x01, 0x88, 0x80, 0x80, 0x80, 0x00, 0x02, 0x60, 0x01, 0x7F, 0x00, 0x60, 0x00, 0x00
+    //         ]),
+    //         Ok((
+    //             EMPTY,
+    //             Section::TypeSection(vec!(
+    //                 FuncType {
+    //                     rt1: vec!(ValType::NumType(NumType::I32)),
+    //                     rt2: vec!()
+    //                 },
+    //                 FuncType {
+    //                     rt1: vec!(),
+    //                     rt2: vec!()
+    //                 }
+    //             ))
+    //         ))
+    //     );
+    // }
 }

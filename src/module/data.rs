@@ -1,6 +1,8 @@
 use nom::IResult;
 
-use crate::{indices::MemIdx, instructions::Expression, util::Decode};
+use crate::instructions::Expression;
+
+use super::{indices::MemIdx, util::Decode};
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]

@@ -1,6 +1,6 @@
 use nom::IResult;
 
-use crate::{
+use super::{
     indices::{FuncIdx, GlobalIdx, MemIdx, TableIdx},
     util::Decode,
     values::Name,

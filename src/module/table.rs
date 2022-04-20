@@ -1,6 +1,6 @@
 use nom::IResult;
 
-use crate::{types::TableType, util::Decode};
+use super::{types::TableType, util::Decode};
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]

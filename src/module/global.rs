@@ -1,6 +1,8 @@
 use nom::IResult;
 
-use crate::{instructions::Expression, types::GlobalType, util::Decode};
+use crate::instructions::Expression;
+
+use super::{types::GlobalType, util::Decode};
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]

@@ -1,6 +1,6 @@
 use nom::IResult;
 
-use crate::{types::MemType, util::Decode};
+use super::{types::MemType, util::Decode};
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]
