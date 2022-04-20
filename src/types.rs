@@ -1,8 +1,14 @@
-use nom::{branch::alt, bytes::complete::tag, combinator::map, IResult};
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    combinator::map,
+    sequence::{pair, preceded},
+    IResult,
+};
 
 use crate::util::Decode;
 
-/// Types of numeric values
+/// Classify numeric values
 #[derive(Debug, PartialEq)]
 pub enum NumType {
     I32,
@@ -22,7 +28,7 @@ impl Decode for NumType {
     }
 }
 
-/// Vector of numeric values processed with SIMD instructions
+/// Classify vectors of numeric values processed by vector instructions (also known as SIMD instructions, single instruction multiple data)
 #[derive(Debug, PartialEq)]
 pub enum VecType {
     V128,
@@ -34,7 +40,7 @@ impl Decode for VecType {
     }
 }
 
-/// First-class references to objects in the runtime store
+/// Classify first-class references to objects in the runtime store
 #[derive(Debug, PartialEq)]
 pub enum RefType {
     FuncRef,
@@ -50,7 +56,7 @@ impl Decode for RefType {
     }
 }
 
-/// The individual values that Wasm can compute with
+/// Classify the individual values that WebAssembly code can compute with and the values that a variable accepts. They are either number types, vector types, or reference types
 #[derive(Debug, PartialEq)]
 pub enum ValType {
     NumType(NumType),
@@ -68,10 +74,10 @@ impl Decode for ValType {
     }
 }
 
-/// The result of executing instructions or functions
+/// Classify the result of executing instructions or functions, which is a sequence of values, written with brackets
 type ResultType = Vec<ValType>;
 
-/// A unique function signature
+/// Classify the signature of functions, mapping a vector of parameters to a vector of results. They are also used to classify the inputs and outputs of instructions
 #[derive(Debug, PartialEq)]
 pub struct FuncType {
     pub rt1: ResultType,
@@ -84,6 +90,91 @@ impl Decode for FuncType {
         let (input, rt1) = ResultType::decode(input)?;
         let (input, rt2) = ResultType::decode(input)?;
         Ok((input, FuncType { rt1, rt2 }))
+    }
+}
+
+/// Classify the size range of resizable storage associated with memory types and table types
+#[derive(Debug, PartialEq)]
+pub struct Limits {
+    pub min: u32,
+    pub max: Option<u32>,
+}
+
+impl Decode for Limits {
+    fn decode(input: &[u8]) -> IResult<&[u8], Self> {
+        alt((
+            map(preceded(tag([0x00]), u32::decode), |min| Limits {
+                min,
+                max: None,
+            }),
+            map(
+                preceded(tag([0x01]), pair(u32::decode, u32::decode)),
+                |pair| Limits {
+                    min: pair.0,
+                    max: Some(pair.1),
+                },
+            ),
+        ))(input)
+    }
+}
+
+/// Classify linear memories and their size range
+#[derive(Debug, PartialEq)]
+pub struct MemType {
+    pub lim: Limits,
+}
+
+impl Decode for MemType {
+    fn decode(input: &[u8]) -> IResult<&[u8], Self> {
+        map(Limits::decode, |limits| Self { lim: limits })(input)
+    }
+}
+
+/// Classify tables over elements of reference type within a size range
+#[derive(Debug, PartialEq)]
+pub struct TableType {
+    pub lim: Limits,
+    pub et: RefType,
+}
+
+impl Decode for TableType {
+    fn decode(input: &[u8]) -> IResult<&[u8], Self> {
+        map(pair(RefType::decode, Limits::decode), |pair| Self {
+            lim: pair.1,
+            et: pair.0,
+        })(input)
+    }
+}
+
+/// Classify global variables, which hold a value and can either be mutable or immutable
+#[derive(Debug, PartialEq)]
+pub struct GlobalType {
+    pub m: Mutability,
+    pub t: ValType,
+}
+
+impl Decode for GlobalType {
+    fn decode(input: &[u8]) -> IResult<&[u8], Self> {
+        map(pair(ValType::decode, Mutability::decode), |pair| Self {
+            m: pair.1,
+            t: pair.0,
+        })(input)
+    }
+}
+
+/// Classify whether something is mutable
+#[derive(Debug, PartialEq)]
+pub enum Mutability {
+    Const,
+    Var,
+}
+
+impl Decode for Mutability {
+    fn decode(input: &[u8]) -> IResult<&[u8], Self> {
+        alt((
+            map(tag([0x00]), |_| Self::Const),
+            map(tag([0x01]), |_| Self::Var),
+        ))(input)
     }
 }
 
@@ -166,5 +257,100 @@ mod tests {
                 }
             ))
         );
+    }
+
+    #[test]
+    fn test_limits_type() {
+        assert_eq!(
+            Limits::decode(&[0x00, 0x01]),
+            Ok((EMPTY, Limits { min: 1, max: None }))
+        );
+        assert_eq!(
+            Limits::decode(&[0x01, 0x01, 0x02]),
+            Ok((
+                EMPTY,
+                Limits {
+                    min: 1,
+                    max: Some(2)
+                }
+            ))
+        );
+        assert!(Limits::decode(&[0x7A]).is_err());
+    }
+
+    #[test]
+    fn test_mem_type() {
+        assert_eq!(
+            MemType::decode(&[0x00, 0x01]),
+            Ok((
+                EMPTY,
+                MemType {
+                    lim: Limits { min: 1, max: None }
+                }
+            ))
+        );
+        assert_eq!(
+            MemType::decode(&[0x01, 0x01, 0x02]),
+            Ok((
+                EMPTY,
+                MemType {
+                    lim: Limits {
+                        min: 1,
+                        max: Some(2)
+                    }
+                }
+            ))
+        );
+        assert!(MemType::decode(&[0x7A]).is_err());
+    }
+
+    #[test]
+    fn test_table_type() {
+        assert_eq!(
+            TableType::decode(&[0x70, 0x00, 0x01]),
+            Ok((
+                EMPTY,
+                TableType {
+                    lim: Limits { min: 1, max: None },
+                    et: RefType::FuncRef
+                }
+            ))
+        );
+        assert_eq!(
+            TableType::decode(&[0x70, 0x01, 0x01, 0x02]),
+            Ok((
+                EMPTY,
+                TableType {
+                    lim: Limits {
+                        min: 1,
+                        max: Some(2)
+                    },
+                    et: RefType::FuncRef
+                }
+            ))
+        );
+        assert!(TableType::decode(&[0x7A]).is_err());
+    }
+
+    #[test]
+    fn test_global_type() {
+        assert_eq!(
+            GlobalType::decode(&[0x7F, 0x00]),
+            Ok((
+                EMPTY,
+                GlobalType {
+                    m: Mutability::Const,
+                    t: ValType::NumType(NumType::I32),
+                }
+            ))
+        );
+        assert!(GlobalType::decode(&[0x7A]).is_err());
+    }
+
+    #[test]
+    fn test_mutability_type() {
+        assert_eq!(Mutability::decode(&[0x00]), Ok((EMPTY, Mutability::Const)));
+        assert_eq!(Mutability::decode(&[0x01]), Ok((EMPTY, Mutability::Var)));
+        assert!(Mutability::decode(&[0x7A]).is_err());
     }
 }
