@@ -1,5 +1,6 @@
-use crate::module::util::Decode;
 use nom::IResult;
+
+use crate::Decode;
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]
@@ -19,4 +20,11 @@ impl Decode for Instruction {
     fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
         todo!()
     }
+}
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+
+    // TODO: Write tests
 }

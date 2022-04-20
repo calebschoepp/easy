@@ -4,6 +4,8 @@ use nom::{
     IResult,
 };
 
+use crate::Decode;
+
 use super::{
     code::Code,
     data::Data,
@@ -15,7 +17,6 @@ use super::{
     memory::Memory,
     table::Table,
     types::FuncType,
-    util::Decode,
     values::Name,
 };
 

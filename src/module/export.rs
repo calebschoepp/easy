@@ -1,8 +1,9 @@
 use nom::IResult;
 
+use crate::Decode;
+
 use super::{
     indices::{FuncIdx, GlobalIdx, MemIdx, TableIdx},
-    util::Decode,
     values::Name,
 };
 
@@ -32,4 +33,11 @@ impl Decode for ExportDescriptor {
     fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
         todo!()
     }
+}
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+
+    // TODO: Write tests
 }

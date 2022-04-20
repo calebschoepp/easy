@@ -6,7 +6,7 @@ use nom::{
     IResult,
 };
 
-use super::util::Decode;
+use crate::Decode;
 
 /// Classify numeric values
 #[derive(Debug, PartialEq)]

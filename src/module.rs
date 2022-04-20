@@ -1,5 +1,7 @@
 use nom::{bytes::complete::tag, multi::many0, IResult};
 
+use crate::Decode;
+
 use self::{
     code::Code,
     data::Data,
@@ -12,7 +14,6 @@ use self::{
     section::Section,
     table::Table,
     types::FuncType,
-    util::Decode,
 };
 
 mod code;
@@ -26,7 +27,6 @@ mod memory;
 mod section;
 mod table;
 mod types;
-pub mod util;
 mod values;
 
 /// A Wasm module

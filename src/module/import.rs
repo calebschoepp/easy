@@ -1,9 +1,10 @@
 use nom::IResult;
 
+use crate::Decode;
+
 use super::{
     indices::TypeIdx,
     types::{GlobalType, MemType, TableType},
-    util::Decode,
     values::Name,
 };
 
@@ -34,4 +35,11 @@ impl Decode for ImportDescriptor {
     fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
         todo!()
     }
+}
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+
+    // TODO: Write tests
 }
