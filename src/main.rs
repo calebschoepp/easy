@@ -35,12 +35,12 @@ fn main() {
 fn run(options: RunOptions) {
     let extension = options.module.extension();
     if extension.is_none() || extension.unwrap() != "wasm" {
-        println!("Fail");
+        println!("Incorrect file extension");
         // TODO: Return result error of some kind
         return;
     }
     if !options.module.exists() {
-        println!("Does not exist");
+        println!("Wasm module not found at path");
         // TODO: Return result error of some kind
         return;
     }

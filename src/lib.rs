@@ -1,11 +1,11 @@
-use indices::TypeIdx;
+use indices::{FuncIdx, GlobalIdx, MemIdx, TableIdx, TypeIdx};
 use nom::{
     bytes::complete::{tag, take},
     combinator::{consumed, map},
     multi::many0,
     IResult,
 };
-use types::FuncType;
+use types::{FuncType, GlobalType, MemType, RefType, TableType, ValType};
 use util::Decode;
 use values::Name;
 
@@ -17,10 +17,18 @@ mod values;
 /// A Wasm module
 #[derive(Debug, PartialEq)]
 pub struct Module {
-    /// Module types
     types: Vec<FuncType>,
-    /// Module functions TODO: Does this need to be a more robust type?
-    functions: Vec<TypeIdx>,
+    imports: Vec<Import>,
+    functions: Vec<TypeIdx>, // TODO: Does this need to be a more robust type for execution?
+    tables: Vec<Table>,
+    memories: Vec<Memory>,
+    globals: Vec<Global>,
+    exports: Vec<Export>,
+    start: Option<FuncIdx>,
+    elements: Vec<Element>,
+    code: Vec<Code>,
+    data: Vec<Data>,
+    data_count: Option<u32>,
 }
 
 impl Decode for Module {
@@ -37,14 +45,34 @@ impl Decode for Module {
         // Create an empty module that we can populate
         let mut module = Self {
             types: Vec::new(),
+            imports: Vec::new(),
             functions: Vec::new(),
+            tables: Vec::new(),
+            memories: Vec::new(),
+            globals: Vec::new(),
+            exports: Vec::new(),
+            start: None,
+            elements: Vec::new(),
+            code: Vec::new(),
+            data: Vec::new(),
+            data_count: None,
         };
 
         // Build up a module based on the sections we've decoded
         sections.into_iter().for_each(|section| match section {
             Section::CustomSection(_) => (),
-            Section::TypeSection(type_section) => module.types = type_section,
-            Section::FuncSection(func_section) => module.functions = func_section,
+            Section::TypeSection(types) => module.types = types,
+            Section::ImportSection(imports) => module.imports = imports,
+            Section::FunctionSection(functions) => module.functions = functions,
+            Section::TableSection(tables) => module.tables = tables,
+            Section::MemorySection(memories) => module.memories = memories,
+            Section::GlobalSection(globals) => module.globals = globals,
+            Section::ExportSection(exports) => module.exports = exports,
+            Section::StartSection(start) => module.start = start,
+            Section::ElementSection(elements) => module.elements = elements,
+            Section::CodeSection(code) => module.code = code,
+            Section::DataSection(data) => module.data = data,
+            Section::DataCountSection(data_count) => module.data_count = data_count,
         });
 
         // Return the decoded module
@@ -81,8 +109,28 @@ enum Section {
     CustomSection((Name, Vec<u8>)),
     /// Types found in the module
     TypeSection(Vec<FuncType>),
+    /// Imports that are required for instantiation
+    ImportSection(Vec<Import>),
     /// Correlation between functions and their respective types
-    FuncSection(Vec<TypeIdx>),
+    FunctionSection(Vec<TypeIdx>),
+    /// Tables for indirection
+    TableSection(Vec<Table>),
+    /// Linear memories
+    MemorySection(Vec<Memory>),
+    /// Globally accessible variables
+    GlobalSection(Vec<Global>),
+    /// Exports accessible to the host environment
+    ExportSection(Vec<Export>),
+    /// The index of a start function that is automatically invoked
+    StartSection(Option<FuncIdx>),
+    /// Elements that can be used to initialize tables
+    ElementSection(Vec<Element>),
+    /// The actual instructions to be executed
+    CodeSection(Vec<Code>),
+    /// Data segments that can be used to initialize memory
+    DataSection(Vec<Data>),
+    /// The number of data segments in the data section
+    DataCountSection(Option<u32>),
 }
 
 impl Decode for Section {
@@ -99,18 +147,268 @@ impl Decode for Section {
             }
             1 => {
                 // Type section
-                map(Vec::<FuncType>::decode, |type_section| {
-                    Section::TypeSection(type_section)
+                map(Vec::<FuncType>::decode, |types| Section::TypeSection(types))(input)
+            }
+            2 => {
+                // Import section
+                map(Vec::<Import>::decode, |imports| {
+                    Section::ImportSection(imports)
                 })(input)
             }
             3 => {
                 // Func section
-                map(Vec::<TypeIdx>::decode, |func_section| {
-                    Section::FuncSection(func_section)
+                map(Vec::<TypeIdx>::decode, |functions| {
+                    Section::FunctionSection(functions)
                 })(input)
             }
-            _ => unreachable!(),
+            4 => {
+                // Table section
+                map(Vec::<Table>::decode, |tables| Section::TableSection(tables))(input)
+            }
+            5 => {
+                // Memory section
+                map(Vec::<Memory>::decode, |memories| {
+                    Section::MemorySection(memories)
+                })(input)
+            }
+            6 => {
+                // Global section
+                map(Vec::<Global>::decode, |globals| {
+                    Section::GlobalSection(globals)
+                })(input)
+            }
+            7 => {
+                // Export section
+                map(Vec::<Export>::decode, |exports| {
+                    Section::ExportSection(exports)
+                })(input)
+            }
+            8 => {
+                // Start section
+                map(Option::<FuncIdx>::decode, |start| {
+                    Section::StartSection(start)
+                })(input)
+            }
+            9 => {
+                // Element section
+                map(Vec::<Element>::decode, |elements| {
+                    Section::ElementSection(elements)
+                })(input)
+            }
+            10 => {
+                // Code section
+                map(Vec::<Code>::decode, |code| Section::CodeSection(code))(input)
+            }
+            11 => {
+                // Data section
+                map(Vec::<Data>::decode, |data| Section::DataSection(data))(input)
+            }
+            12 => {
+                // Data section
+                map(Option::<u32>::decode, |data_count| {
+                    Section::DataCountSection(data_count)
+                })(input)
+            }
+            _ => unreachable!(), // TODO: This should probably actually throw a parse error rather than panic
         }
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Import {
+    module: Name,
+    name: Name,
+    descriptor: ImportDescriptor,
+}
+
+impl Decode for Import {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub enum ImportDescriptor {
+    Func(TypeIdx),
+    Table(TableType),
+    Mem(MemType),
+    Global(GlobalType),
+}
+
+impl Decode for ImportDescriptor {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Table {
+    tt: TableType,
+}
+
+impl Decode for Table {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Memory {
+    mt: MemType,
+}
+
+impl Decode for Memory {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Global {
+    gt: GlobalType,
+    init: Expression,
+}
+
+impl Decode for Global {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Expression(Vec<Instruction>);
+
+impl Decode for Expression {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+enum Instruction {}
+
+impl Decode for Instruction {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Export {
+    nm: Name,
+    d: ExportDescriptor,
+}
+
+impl Decode for Export {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub enum ExportDescriptor {
+    Func(FuncIdx),
+    Table(TableIdx),
+    Mem(MemIdx),
+    Global(GlobalIdx),
+}
+
+impl Decode for ExportDescriptor {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub enum ElementKind {
+    FuncRef,
+}
+
+impl Decode for ElementKind {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub enum Element {
+    ActiveIndex(Expression, Vec<FuncIdx>),
+    PassiveIndex(ElementKind, Vec<FuncIdx>),
+    ActiveExplicitIndex(TableIdx, Expression, ElementKind, Vec<FuncIdx>),
+    DeclarativeIndex(ElementKind, Vec<FuncIdx>),
+    ActiveExpression(Expression, Vec<Expression>),
+    PassiveExpression(RefType, Vec<Expression>),
+    ActiveExplicitExpression(TableIdx, Expression, RefType, Vec<Expression>),
+    DeclarativeExpression(RefType, Vec<Expression>),
+}
+
+impl Decode for Element {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Code {
+    pub size: u32,
+    pub code: Func,
+}
+
+impl Decode for Code {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Func {
+    pub locals: Vec<Local>,
+    pub body: Expression,
+}
+
+impl Decode for Func {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub struct Local {
+    pub count: u32,
+    pub value_type: ValType,
+}
+
+impl Decode for Local {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
+    }
+}
+
+/// TODO: Document
+#[derive(Debug, PartialEq)]
+pub enum Data {
+    Active(Expression, Vec<u8>),
+    Passive(Vec<u8>),
+    ActiveExplicit(MemIdx, Expression, Vec<u8>),
+}
+
+impl Decode for Data {
+    fn decode(_input: &[u8]) -> IResult<&[u8], Self> {
+        todo!()
     }
 }
 
