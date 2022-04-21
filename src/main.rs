@@ -1,4 +1,4 @@
-use easy::Module;
+use easy::{Module, New};
 use std::{fs::File, io::Read, path::PathBuf};
 use structopt::StructOpt;
 
@@ -48,7 +48,7 @@ fn run(options: RunOptions) {
     // TODO: Slice or vector or bytes more efficient?
     let bytes = read_file(options.module);
 
-    let module = Module::new(&bytes);
+    let module = Module::new(&bytes as &[u8]);
     println!("{:?}", module);
 }
 
@@ -58,3 +58,5 @@ fn read_file(path: PathBuf) -> Vec<u8> {
     f.read_to_end(&mut data).expect("Unable to read data");
     data
 }
+
+// TODO: Write some integration tests that run the entire CLI

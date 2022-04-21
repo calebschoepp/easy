@@ -6,7 +6,7 @@ use nom::IResult;
 mod instructions;
 mod module;
 
-/// TODO: Document
+/// Trait that allows a type to decode itself from a sequence of bytes using nom
 trait Decode
 where
     Self: Sized,
@@ -15,10 +15,19 @@ where
     fn decode<'a>(input: &'a [u8]) -> IResult<&[u8], Self, nom::error::Error<&'a [u8]>>;
 }
 
-impl Module {
-    /// TODO: Document
-    pub fn new(bytes: &[u8]) -> Option<Self> {
-        // TODO: Return result so that errors are explicit
+/// Trait that allows you to create a new module
+pub trait New<T>
+where
+    Self: Sized,
+{
+    // TODO: Return result so that errors are explicit
+    /// Create a new module
+    fn new(input: T) -> Option<Module>;
+}
+
+impl New<&[u8]> for Module {
+    /// Create a new module from a sequence of bytes
+    fn new(bytes: &[u8]) -> Option<Module> {
         match Module::decode(bytes) {
             Ok((_, module)) => Some(module),
             Err(_) => None,
@@ -26,12 +35,26 @@ impl Module {
     }
 }
 
+impl New<&str> for Module {
+    /// Create a new module from a sequence of characters
+    fn new(_chars: &str) -> Option<Self> {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn test_module_new() {
-        let bytes = include_bytes!("../examples/module.wasm");
+    fn test_module_from_bytes() {
+        let bytes: &[u8] = include_bytes!("../examples/module.wasm");
         assert!(Module::new(bytes).is_some());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_module_from_str() {
+        let str = "(module)";
+        Module::new(str);
     }
 }
