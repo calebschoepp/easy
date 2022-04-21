@@ -45,10 +45,10 @@ fn run(options: RunOptions) {
         return;
     }
 
-    // TODO: Slice or vector or bytes more efficient?
     let bytes = read_file(options.module);
 
-    let module = Module::new(&bytes as &[u8]);
+    let module = Module::new(&bytes as &[u8]).unwrap(); // TODO: Don't unwrap
+    println!("{:?}", module.validate());
     println!("{:?}", module);
 }
 

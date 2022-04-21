@@ -42,6 +42,15 @@ impl New<&str> for Module {
     }
 }
 
+impl Module {
+    /// TODO: Document
+    pub fn validate(&self) -> Result<(), &'static str> {
+        // TODO: Improve error return type
+        // TODO: Implement
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
