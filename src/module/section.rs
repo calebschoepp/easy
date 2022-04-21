@@ -134,30 +134,54 @@ impl Decode for Section {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use crate::module::types::{NumType, ValType};
+
+    use super::*;
+
+    const EMPTY: &[u8] = &[];
+
+    #[test]
+    fn test_custom_section() {
+        let input = &[0x00, 0x05, 0x01, 0xAA, 0x01, 0x02, 0x03];
+        let section = Section::decode(input);
+        assert_eq!(
+            section,
+            Ok((
+                EMPTY,
+                Section::CustomSection((Name(vec!(0xAA)), vec!(0x01, 0x02, 0x03)))
+            ))
+        )
+    }
+
+    #[test]
+    fn test_type_section() {
+        let input = &[0x01, 0x6, 0x01, 0x60, 0x01, 0x7F, 0x01, 0x7F];
+        let section = Section::decode(input);
+        assert_eq!(
+            section,
+            Ok((
+                EMPTY,
+                Section::TypeSection(vec!(FuncType {
+                    rt1: vec!(ValType::NumType(NumType::I32)),
+                    rt2: vec!(ValType::NumType(NumType::I32)),
+                }))
+            ))
+        )
+    }
 
     // TODO: Write tests
-
     // #[test]
-    // fn test_section() {
-    //     // assert_eq!(Section::decode(&[0x00]), Ok((EMPTY, Section::CustomSection(()))));
+    // fn test_import_section() {
+    //     let input = &[
+    //         0x02, 0x09, 0x01, 0xAA, 0x01, 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00,
+    //     ];
+    //     let section = Section::decode(input);
     //     assert_eq!(
-    //         Section::decode(&[
-    //             0x01, 0x88, 0x80, 0x80, 0x80, 0x00, 0x02, 0x60, 0x01, 0x7F, 0x00, 0x60, 0x00, 0x00
-    //         ]),
+    //         section,
     //         Ok((
     //             EMPTY,
-    //             Section::TypeSection(vec!(
-    //                 FuncType {
-    //                     rt1: vec!(ValType::NumType(NumType::I32)),
-    //                     rt2: vec!()
-    //                 },
-    //                 FuncType {
-    //                     rt1: vec!(),
-    //                     rt2: vec!()
-    //                 }
-    //             ))
+    //             Section::TypeSection(vec!(FuncType { rt1: ResultType})))
     //         ))
-    //     );
+    //     )
     // }
 }

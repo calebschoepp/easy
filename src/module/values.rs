@@ -60,7 +60,7 @@ where
 
 /// A UTF-8 character sequence
 #[derive(Debug, PartialEq)]
-pub struct Name(Vec<u8>);
+pub struct Name(pub Vec<u8>);
 
 impl Decode for Name {
     fn decode(input: &[u8]) -> IResult<&[u8], Self> {
