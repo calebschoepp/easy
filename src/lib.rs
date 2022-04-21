@@ -55,14 +55,14 @@ impl Module {
 mod tests {
     use super::*;
     #[test]
-    fn test_module_from_bytes() {
+    fn test_module_new_bytes() {
         let bytes: &[u8] = include_bytes!("../examples/module.wasm");
         assert!(Module::new(bytes).is_some());
     }
 
     #[test]
     #[should_panic]
-    fn test_module_from_str() {
+    fn test_module_new_str() {
         let str = "(module)";
         Module::new(str);
     }

@@ -134,7 +134,10 @@ impl Decode for Section {
 
 #[cfg(test)]
 mod tests {
-    use crate::module::types::{NumType, ValType};
+    use crate::module::{
+        import::ImportDescriptor,
+        types::{NumType, ValType},
+    };
 
     use super::*;
 
@@ -169,19 +172,22 @@ mod tests {
         )
     }
 
+    #[test]
+    fn test_import_section() {
+        let input = &[0x02, 0x07, 0x01, 0x01, 0xAA, 0x01, 0xAB, 0x00, 0x00];
+        let section = Section::decode(input);
+        assert_eq!(
+            section,
+            Ok((
+                EMPTY,
+                Section::ImportSection(vec!(Import {
+                    module: Name(vec!(0xAA)),
+                    name: Name(vec!(0xAB)),
+                    descriptor: ImportDescriptor::Func(0)
+                }))
+            ))
+        )
+    }
+
     // TODO: Write tests
-    // #[test]
-    // fn test_import_section() {
-    //     let input = &[
-    //         0x02, 0x09, 0x01, 0xAA, 0x01, 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00,
-    //     ];
-    //     let section = Section::decode(input);
-    //     assert_eq!(
-    //         section,
-    //         Ok((
-    //             EMPTY,
-    //             Section::TypeSection(vec!(FuncType { rt1: ResultType})))
-    //         ))
-    //     )
-    // }
 }
