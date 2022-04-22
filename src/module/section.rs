@@ -127,7 +127,7 @@ impl Decode for Section {
                     Section::DataCountSection(data_count)
                 })(input)
             }
-            _ => unreachable!(), // TODO: This should probably actually throw a parse error rather than panic
+            _ => unreachable!(), // TODO: This should probably actually throw a parse error rather than panic. Write a test for it
         }
     }
 }
@@ -235,6 +235,7 @@ mod tests {
         )
     }
 
+    // TODO: Tests for global section
     // #[test]
     // fn test_global_section() {
     //     let input = &[0x06, 0x??];
@@ -264,5 +265,59 @@ mod tests {
         )
     }
 
-    // TODO: Write tests
+    #[test]
+    fn test_start_section() {
+        let input = &[0x08, 0x01, 0x00];
+        let section = Section::decode(input);
+        assert_eq!(section, Ok((EMPTY, Section::StartSection(Some(0)))))
+    }
+
+    // TODO: Tests for element section
+    // #[test]
+    // fn test_element_section() {
+    //     let input = &[0x09, 0x??];
+    //     let section = Section::decode(input);
+    //     assert_eq!(
+    //         section,
+    //         Ok((
+    //             EMPTY,
+    //             Section::ElementSection(vec!(Element { gt: todo!(), init: todo!() }))
+    //         ))
+    //     )
+    // }
+
+    // TODO: Tests for code section
+    // #[test]
+    // fn test_code_section() {
+    //     let input = &[0x09, 0x??];
+    //     let section = Section::decode(input);
+    //     assert_eq!(
+    //         section,
+    //         Ok((
+    //             EMPTY,
+    //             Section::CodeSection(vec!(Code { gt: todo!(), init: todo!() }))
+    //         ))
+    //     )
+    // }
+
+    // TODO: Tests for data section
+    // #[test]
+    // fn test_data_section() {
+    //     let input = &[0x09, 0x??];
+    //     let section = Section::decode(input);
+    //     assert_eq!(
+    //         section,
+    //         Ok((
+    //             EMPTY,
+    //             Section::DataSection(vec!(Data { gt: todo!(), init: todo!() }))
+    //         ))
+    //     )
+    // }
+
+    #[test]
+    fn test_data_count_section() {
+        let input = &[0x0C, 0x01, 0x08];
+        let section = Section::decode(input);
+        assert_eq!(section, Ok((EMPTY, Section::DataCountSection(Some(8)))))
+    }
 }
