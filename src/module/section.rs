@@ -135,6 +135,7 @@ impl Decode for Section {
 #[cfg(test)]
 mod tests {
     use crate::module::{
+        export::ExportDescriptor,
         import::ImportDescriptor,
         types::{Limits, MemType, NumType, RefType, TableType, ValType},
     };
@@ -229,6 +230,35 @@ mod tests {
                     mt: MemType {
                         lim: Limits { min: 0, max: None }
                     }
+                }))
+            ))
+        )
+    }
+
+    // #[test]
+    // fn test_global_section() {
+    //     let input = &[0x06, 0x??];
+    //     let section = Section::decode(input);
+    //     assert_eq!(
+    //         section,
+    //         Ok((
+    //             EMPTY,
+    //             Section::GlobalSection(vec!(Global { gt: todo!(), init: todo!() }))
+    //         ))
+    //     )
+    // }
+
+    #[test]
+    fn test_export_section() {
+        let input = &[0x07, 0x05, 0x01, 0x1, 0xAA, 0x00, 0x00];
+        let section = Section::decode(input);
+        assert_eq!(
+            section,
+            Ok((
+                EMPTY,
+                Section::ExportSection(vec!(Export {
+                    name: Name(vec!(0xAA)),
+                    descriptor: ExportDescriptor::Func(0),
                 }))
             ))
         )
