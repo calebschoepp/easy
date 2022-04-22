@@ -136,7 +136,7 @@ impl Decode for Section {
 mod tests {
     use crate::module::{
         import::ImportDescriptor,
-        types::{Limits, NumType, RefType, TableType, ValType},
+        types::{Limits, MemType, NumType, RefType, TableType, ValType},
     };
 
     use super::*;
@@ -211,6 +211,23 @@ mod tests {
                             max: Some(1),
                         },
                         et: RefType::FuncRef
+                    }
+                }))
+            ))
+        )
+    }
+
+    #[test]
+    fn test_memory_section() {
+        let input = &[0x05, 0x03, 0x01, 0x00, 0x00];
+        let section = Section::decode(input);
+        assert_eq!(
+            section,
+            Ok((
+                EMPTY,
+                Section::MemorySection(vec!(Memory {
+                    mt: MemType {
+                        lim: Limits { min: 0, max: None }
                     }
                 }))
             ))
