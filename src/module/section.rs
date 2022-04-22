@@ -136,7 +136,7 @@ impl Decode for Section {
 mod tests {
     use crate::module::{
         import::ImportDescriptor,
-        types::{NumType, ValType},
+        types::{Limits, NumType, RefType, TableType, ValType},
     };
 
     use super::*;
@@ -184,6 +184,34 @@ mod tests {
                     module: Name(vec!(0xAA)),
                     name: Name(vec!(0xAB)),
                     descriptor: ImportDescriptor::Func(0)
+                }))
+            ))
+        )
+    }
+
+    #[test]
+    fn test_function_section() {
+        let input = &[0x03, 0x03, 0x02, 0x00, 0x01];
+        let section = Section::decode(input);
+        assert_eq!(section, Ok((EMPTY, Section::FunctionSection(vec!(0, 1)))))
+    }
+
+    #[test]
+    fn test_table_section() {
+        let input = &[0x04, 0x5, 0x01, 0x70, 0x01, 0x00, 0x01];
+        let section = Section::decode(input);
+        assert_eq!(
+            section,
+            Ok((
+                EMPTY,
+                Section::TableSection(vec!(Table {
+                    tt: TableType {
+                        lim: Limits {
+                            min: 0,
+                            max: Some(1),
+                        },
+                        et: RefType::FuncRef
+                    }
                 }))
             ))
         )
