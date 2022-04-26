@@ -2,9 +2,13 @@ use nom::{branch::alt, bytes::complete::tag, combinator::map, multi::many_till, 
 
 use crate::Decode;
 
-use self::numeric::{NumericInstruction, SaturatingTruncationInstruction};
+use self::{
+    numeric::{NumericInstruction, SaturatingTruncationInstruction},
+    reference::ReferenceInstruction,
+};
 
 mod numeric;
+mod reference;
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]
@@ -22,7 +26,7 @@ impl Decode for Expression {
 #[derive(Debug, PartialEq)]
 enum Instruction {
     //     Control(ControlInstruction),
-    //     Reference(ReferenceInstruction),
+    Reference(ReferenceInstruction),
     //     Parametric(ParametricInstruction),
     //     Variable(VariableInstruction),
     //     Table(TableInstruction),
@@ -37,9 +41,9 @@ impl Decode for Instruction {
             // map(ControlInstruction::decode, |instruction| {
             //     Self::Control(instruction)
             // }),
-            // map(ReferenceInstruction::decode, |instruction| {
-            //     Self::Reference(instruction)
-            // }),
+            map(ReferenceInstruction::decode, |instruction| {
+                Self::Reference(instruction)
+            }),
             // map(ParametricInstruction::decode, |instruction| {
             //     Self::Parametric(instruction)
             // }),

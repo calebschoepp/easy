@@ -22,11 +22,11 @@ mod element;
 mod export;
 mod global;
 mod import;
-mod indices;
+pub mod indices;
 mod memory;
 mod section;
 mod table;
-mod types;
+pub mod types;
 mod values;
 
 /// A Wasm module
