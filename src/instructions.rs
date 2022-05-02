@@ -6,11 +6,13 @@ use self::{
     numeric::{NumericInstruction, SaturatingTruncationInstruction},
     parametric::ParametricInstruction,
     reference::ReferenceInstruction,
+    variable::VariableInstruction,
 };
 
 mod numeric;
 mod parametric;
 mod reference;
+mod variable;
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]
@@ -30,7 +32,7 @@ enum Instruction {
     //     Control(ControlInstruction),
     Reference(ReferenceInstruction),
     Parametric(ParametricInstruction),
-    //     Variable(VariableInstruction),
+    Variable(VariableInstruction),
     //     Table(TableInstruction),
     //     Memory(MemoryInstruction),
     Numeric(NumericInstruction),
@@ -49,9 +51,9 @@ impl Decode for Instruction {
             map(ParametricInstruction::decode, |instruction| {
                 Self::Parametric(instruction)
             }),
-            // map(VariableInstruction::decode, |instruction| {
-            //     Self::Variable(instruction)
-            // }),
+            map(VariableInstruction::decode, |instruction| {
+                Self::Variable(instruction)
+            }),
             // map(TableInstruction::decode, |instruction| {
             //     Self::Table(instruction)
             // }),
