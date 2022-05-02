@@ -8,6 +8,7 @@ use nom::{
 
 use crate::Decode;
 
+/// TODO: Document
 #[derive(Debug, PartialEq)]
 pub enum NumericInstruction {
     // const
@@ -355,6 +356,7 @@ impl Decode for NumericInstruction {
     }
 }
 
+/// TODO: Document
 #[derive(Debug, PartialEq)]
 pub enum SaturatingTruncationInstruction {
     I32TruncSatF32S,

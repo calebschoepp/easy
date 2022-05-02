@@ -4,10 +4,12 @@ use crate::Decode;
 
 use self::{
     numeric::{NumericInstruction, SaturatingTruncationInstruction},
+    parametric::ParametricInstruction,
     reference::ReferenceInstruction,
 };
 
 mod numeric;
+mod parametric;
 mod reference;
 
 /// TODO: Document
@@ -27,7 +29,7 @@ impl Decode for Expression {
 enum Instruction {
     //     Control(ControlInstruction),
     Reference(ReferenceInstruction),
-    //     Parametric(ParametricInstruction),
+    Parametric(ParametricInstruction),
     //     Variable(VariableInstruction),
     //     Table(TableInstruction),
     //     Memory(MemoryInstruction),
@@ -44,9 +46,9 @@ impl Decode for Instruction {
             map(ReferenceInstruction::decode, |instruction| {
                 Self::Reference(instruction)
             }),
-            // map(ParametricInstruction::decode, |instruction| {
-            //     Self::Parametric(instruction)
-            // }),
+            map(ParametricInstruction::decode, |instruction| {
+                Self::Parametric(instruction)
+            }),
             // map(VariableInstruction::decode, |instruction| {
             //     Self::Variable(instruction)
             // }),

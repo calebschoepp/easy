@@ -5,6 +5,7 @@ use crate::{
     Decode,
 };
 
+/// TODO: Document
 #[derive(Debug, PartialEq)]
 pub enum ReferenceInstruction {
     Null(RefType),
