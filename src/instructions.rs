@@ -28,7 +28,7 @@ impl Decode for Expression {
 
 /// TODO: Document
 #[derive(Debug, PartialEq)]
-enum Instruction {
+pub enum Instruction {
     //     Control(ControlInstruction),
     Reference(ReferenceInstruction),
     Parametric(ParametricInstruction),
